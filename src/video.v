@@ -5,6 +5,7 @@ module video
 	input  wire       clock,
 	input  wire       ce,
 	input  wire       altg,
+	output wire       int,
 	output wire[ 1:0] stdn,
 	output wire[ 1:0] sync,
 	output wire[ 8:0] rgb,
@@ -84,6 +85,8 @@ wire hSync = hCount >= 344 && hCount <= 375;
 wire vSync = vCount >= 260 && vCount <= 263;
 
 //-------------------------------------------------------------------------------------------------
+
+assign int = !(vCount == 248 && hCount >= 2 && hCount <= 65);
 
 assign stdn = 2'b01; // PAL
 assign sync = { 1'b1, ~(hSync|vSync) };
