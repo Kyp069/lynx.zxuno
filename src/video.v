@@ -33,14 +33,11 @@ always @(posedge clock) if(ce) if(videoEnableLoad) videoEnable <= dataEnable;
 
 //-------------------------------------------------------------------------------------------------
 
-reg[7:0] redInput;
 reg[7:0] blueInput;
-reg[7:0] greenInput;
-//reg[7:0] greenxInput;
-
 wire blueInputLoad = (hCount[2:0] == 1) && dataEnable;
 always @(posedge clock) if(ce) if(blueInputLoad) blueInput <= d;
 
+reg[7:0] redInput;
 wire redInputLoad = (hCount[2:0] == 3) && dataEnable;
 always @(posedge clock) if(ce) if(redInputLoad) redInput <= d;
 
@@ -90,7 +87,7 @@ assign int = !(vCount == 248 && hCount >= 2 && hCount <= 65);
 
 assign stdn = 2'b01; // PAL
 assign sync = { 1'b1, ~(hSync|vSync) };
-assign rgb = videoBlank || !videoEnable ? 9'd0 : { {3{redOutput[7]}}, {3{blueOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}} };
+assign rgb = videoBlank || !videoEnable ? 9'd0 : { {3{redOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}}, {3{blueOutput[7]}} };
 
 assign b = hCount[2:1];
 assign a = { vCount[7:0], hCount[7:3] };

@@ -8,7 +8,7 @@ NET clock50  LOC="P55"  | IOSTANDARD = LVCMOS33 | PERIOD=20ns;
 
 # LED #########################################################################
 
-#NET led      LOC="P11"  | IOSTANDARD = LVCMOS33;
+NET led      LOC="P11"  | IOSTANDARD = LVCMOS33;
 
 # Video ###########################################################################################
 
@@ -30,7 +30,7 @@ NET rgb<0>   LOC="P88"  | IOSTANDARD = LVCMOS33 | SLEW=FAST;
 
 # Audio ###########################################################################################
 
-#NET ear      LOC="P94"  | IOSTANDARD = LVCMOS33 | SLEW=FAST;
+NET ear      LOC="P94"  | IOSTANDARD = LVCMOS33 | SLEW=FAST;
 
 NET audio<1> LOC="P9"   | IOSTANDARD = LVCMOS33 | SLEW=FAST; # right
 NET audio<0> LOC="P10"  | IOSTANDARD = LVCMOS33 | SLEW=FAST; # left

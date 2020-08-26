@@ -9,13 +9,13 @@ module lynx48
 //-------------------------------------------------------------------------------------------------
 (
 	input  wire      clock50,
-//	output wire      led,
+	output wire      led,
 
 	output wire[1:0] stdn,
 	output wire[1:0] sync,
 	output wire[8:0] rgb,
 
-//	input  wire      ear,
+	input  wire      ear,
 	output wire[1:0] audio,
 
 	input  wire[1:0] ps2
@@ -62,7 +62,6 @@ cpu Cpu
 	.int    (int    ),
 	.mreq   (mreq   ),
 	.iorq   (iorq   ),
-	.rd     (rd     ),
 	.wr     (wr     ),
 	.di     (di     ),
 	.do     (do     ),
@@ -145,8 +144,8 @@ always @(negedge reset, posedge clock) if(!reset) reg7F <= 1'd0; else if(ce4p) i
 
 wire io80 = !(!iorq && !wr && a[7] && !a[6] && !a[2] && !a[1]);
 
-reg[6:2] reg80;
-always @(negedge reset, posedge  clock) if(!reset) reg80 <= 1'd0; else if(ce4p) if(!io80) reg80 <= do[6:2];
+reg[6:1] reg80;
+always @(negedge reset, posedge  clock) if(!reset) reg80 <= 1'd0; else if(ce4p) if(!io80) reg80 <= do[6:1];
 
 //-------------------------------------------------------------------------------------------------
 
@@ -228,13 +227,15 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 //-------------------------------------------------------------------------------------------------
 
 assign di
-	= !mreq && !rd && !reg7F[4] && a[15:14] == 2'b00  ? romDo
-	: !mreq && !rd && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
-	: !mreq && !rd && !reg7F[5] ? ramDo
-	: !mreq && !rd &&  reg7F[6] && !reg80[2] ? vrbDo2
-	: !mreq && !rd &&  reg7F[6] && !reg80[3] ? vggDo2
-	: !iorq && !rd &&  a[7:0] == 8'h80 ? keybDo
+	= !mreq && !reg7F[4] && a[15:14] == 2'b00  ? romDo
+	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
+	: !mreq && !reg7F[5] ? ramDo
+	: !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
+	: !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
+	: !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], keybDo[0]&ear }
 	: 8'hFF;
+
+assign led = ~ear;
 
 //-------------------------------------------------------------------------------------------------
 endmodule

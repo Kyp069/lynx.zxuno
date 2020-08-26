@@ -160,8 +160,8 @@ if(received)
 			8'h46: key[6][0] <= pressed; // 9
 			8'h43: key[6][1] <= pressed; // I
 			8'h44: key[6][2] <= pressed; // O
-//			8'h00: key[6][3] <= pressed; // 
-			8'h41: key[6][4] <= pressed; // ,
+			8'h41: key[6][3] <= pressed; // ,
+//			8'h00: key[6][4] <= pressed; // 
 			8'h42: key[6][5] <= pressed; // K
 //			8'h00: key[6][6] <= pressed; // 
 //			8'h00: key[6][7] <= pressed; // 
