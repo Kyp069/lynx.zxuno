@@ -144,8 +144,8 @@ always @(negedge reset, posedge clock) if(!reset) reg7F <= 1'd0; else if(ce4p) i
 
 wire io80 = !(!iorq && !wr && a[7] && !a[6] && !a[2] && !a[1]);
 
-reg[6:1] reg80;
-always @(negedge reset, posedge  clock) if(!reset) reg80 <= 1'd0; else if(ce4p) if(!io80) reg80 <= do[6:1];
+reg[5:2] reg80;
+always @(negedge reset, posedge  clock) if(!reset) reg80 <= 1'd0; else if(ce4p) if(!io80) reg80 <= do[5:2];
 
 //-------------------------------------------------------------------------------------------------
 
@@ -178,15 +178,14 @@ video Video
 
 //-------------------------------------------------------------------------------------------------
 
-dac #(.MSBI(5)) Dac
+audio Audio
 (
-	.reset  (reset  ),
 	.clock  (clock  ),
-	.di     (reg84  ),
-	.do     (dacDo  )
+	.reset  (reset  ),
+	.ear    (!ear   ),
+	.dac    (reg84  ),
+	.audio  (audio  )
 );
-
-assign audio = {2{dacDo}};
 
 //-------------------------------------------------------------------------------------------------
 
