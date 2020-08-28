@@ -1,24 +1,32 @@
 //-------------------------------------------------------------------------------------------------
-// Linkx48: Lynx 48K implementation for ZX-Uno board by Kyp
-// https://github.com/Kyp069/lynx48
+// Lynx: Lynx 48K/96K implementation for ZX-Uno board by Kyp
+// https://github.com/Kyp069/lynx
 //-------------------------------------------------------------------------------------------------
 // Z80 chip module implementation by Sorgelig
 // https://github.com/sorgelig/ZX_Spectrum-128K_MIST
 //-------------------------------------------------------------------------------------------------
-module lynx48
+// Define either Lynx48K or Lynx96K to select model in
+// Synthesize - XST, Process properties, Advanced parameter "-define" (Verilog Macros)
+//-------------------------------------------------------------------------------------------------
+module lynx
 //-------------------------------------------------------------------------------------------------
 (
-	input  wire      clock50,
-	output wire      led,
+	input  wire       clock50,
+	output wire       led,
 
-	output wire[1:0] stdn,
-	output wire[1:0] sync,
-	output wire[8:0] rgb,
+	output wire[ 1:0] stdn,
+	output wire[ 1:0] sync,
+	output wire[ 8:0] rgb,
 
-	input  wire      ear,
-	output wire[1:0] audio,
+	input  wire       ear,
+	output wire[ 1:0] audio,
 
-	input  wire[1:0] ps2
+	input  wire[ 1:0] ps2,
+	input  wire[ 5:0] joy,
+
+	output wire       ramWe,
+	inout  wire[ 7:0] ramD,
+	output wire[20:0] ramA
 );
 //-------------------------------------------------------------------------------------------------
 
@@ -70,6 +78,8 @@ cpu Cpu
 
 //-------------------------------------------------------------------------------------------------
 
+`ifdef Lynx48K
+
 wire[ 7:0] romDo;
 wire[13:0] romA;
 
@@ -81,19 +91,22 @@ rom #(.AW(14), .FN("48K-1+2.hex")) Rom
 	.a      (romA   )
 );
 
-wire[ 7:0] ramDi;
-wire[ 7:0] ramDo;
-wire[13:0] ramA;
+`elsif Lynx96K
 
-spr #(.AW(14)) Ram
+wire[ 7:0] romDo;
+wire[14:0] romA;
+
+rom #(.AW(15), .FN("96K-1+2+3.hex")) Rom
 (
 	.clock  (clock  ),
 	.ce     (ce4p   ),
-	.we     (ramWe  ),
-	.di     (ramDi  ),
-	.do     (ramDo  ),
-	.a      (ramA   )
+	.do     (romDo  ),
+	.a      (romA   )
 );
+
+`endif
+
+//-------------------------------------------------------------------------------------------------
 
 wire[ 7:0] vrbDo1;
 wire[13:0] vrbA1;
@@ -144,8 +157,8 @@ always @(negedge reset, posedge clock) if(!reset) reg7F <= 1'd0; else if(ce4p) i
 
 wire io80 = !(!iorq && !wr && a[7] && !a[6] && !a[2] && !a[1]);
 
-reg[5:2] reg80;
-always @(negedge reset, posedge  clock) if(!reset) reg80 <= 1'd0; else if(ce4p) if(!io80) reg80 <= do[5:2];
+reg[5:1] reg80;
+always @(negedge reset, posedge  clock) if(!reset) reg80 <= 1'd0; else if(ce4p) if(!io80) reg80 <= do[5:1];
 
 //-------------------------------------------------------------------------------------------------
 
@@ -205,11 +218,32 @@ keyboard Keyboard
 
 //-------------------------------------------------------------------------------------------------
 
-assign romA = { a[13], a[12:0] };
+`ifdef Lynx48K
+
+assign romA = a[13:0];
+
+`elsif Lynx96K
+
+assign romA = a[14:0];
+
+`endif
+
+//-------------------------------------------------------------------------------------------------
 
 assign ramWe = !(!mreq && !wr && !reg7F[0]);
-assign ramDi = do;
-assign ramA = { a[14], a[12:0] };
+assign ramD = ramWe ? 8'hZZ : do;
+
+`ifdef Lynx48K
+
+assign ramA = { 7'b0000000,  a[14], a[12:0] };
+
+`elsif Lynx96K
+
+assign ramA = { 5'b00000, a };
+
+`endif
+
+//-------------------------------------------------------------------------------------------------
 
 assign vrbA1 = { vmmB[0], vmmA };
 assign vrbWe2 = !(!mreq && !wr && reg7F[1] && reg80[5]);
@@ -228,10 +262,11 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 assign di
 	= !mreq && !reg7F[4] && a[15:14] == 2'b00  ? romDo
 	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
-	: !mreq && !reg7F[5] ? ramDo
+	: !mreq && !reg7F[5] ? ramD
 	: !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
 	: !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
-	: !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], keybDo[0]&ear }
+	: !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], reg80[1] ? ear : keybDo[0] }
+	: !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy }
 	: 8'hFF;
 
 assign led = ~ear;
