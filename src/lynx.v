@@ -96,7 +96,7 @@ rom #(.AW(14), .FN("48K-1+2.hex")) Rom
 wire[ 7:0] romDo;
 wire[14:0] romA;
 
-rom #(.AW(15), .FN("96K-1+2+3.hex")) Rom
+rom #(.AW(15), .FN("96K-1+2+3s.hex")) Rom
 (
 	.clock  (clock  ),
 	.ce     (ce4p   ),
