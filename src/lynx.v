@@ -5,9 +5,6 @@
 // Z80 chip module implementation by Sorgelig
 // https://github.com/sorgelig/ZX_Spectrum-128K_MIST
 //-------------------------------------------------------------------------------------------------
-// Define either Lynx48K or Lynx96K to select model in
-// Synthesize - XST, Process properties, Advanced parameter "-define" (Verilog Macros)
-//-------------------------------------------------------------------------------------------------
 module lynx
 //-------------------------------------------------------------------------------------------------
 (
@@ -28,6 +25,12 @@ module lynx
 	inout  wire[ 7:0] ramD,
 	output wire[20:0] ramA
 );
+//-------------------------------------------------------------------------------------------------
+
+localparam ramAW = 16; // 14 = Lynx 48K, 16 = Lynx 96K/96Kscorpion
+localparam romAW = 15; // 14 = Lynx 48K, 15 = Lynx 96K/96Kscorpion
+localparam romFN = "96K-1+2+3s.hex"; // "48K-1+2.hex" : "96K-1+2+3.hex" : "96K-1+2+3s.hex"
+
 //-------------------------------------------------------------------------------------------------
 
 clock Clock
@@ -78,33 +81,16 @@ cpu Cpu
 
 //-------------------------------------------------------------------------------------------------
 
-`ifdef Lynx48K
-
 wire[ 7:0] romDo;
-wire[13:0] romA;
+wire[romAW-1:0] romA;
 
-rom #(.AW(14), .FN("48K-1+2.hex")) Rom
+rom #(.AW(romAW), .FN(romFN)) Rom
 (
 	.clock  (clock  ),
 	.ce     (ce4p   ),
 	.do     (romDo  ),
 	.a      (romA   )
 );
-
-`elsif Lynx96K
-
-wire[ 7:0] romDo;
-wire[14:0] romA;
-
-rom #(.AW(15), .FN("96K-1+2+3s.hex")) Rom
-(
-	.clock  (clock  ),
-	.ce     (ce4p   ),
-	.do     (romDo  ),
-	.a      (romA   )
-);
-
-`endif
 
 //-------------------------------------------------------------------------------------------------
 
@@ -218,30 +204,11 @@ keyboard Keyboard
 
 //-------------------------------------------------------------------------------------------------
 
-`ifdef Lynx48K
-
-assign romA = a[13:0];
-
-`elsif Lynx96K
-
-assign romA = a[14:0];
-
-`endif
-
-//-------------------------------------------------------------------------------------------------
+assign romA = a[romAW-1:0];
 
 assign ramWe = !(!mreq && !wr && !reg7F[0]);
 assign ramD = ramWe ? 8'hZZ : do;
-
-`ifdef Lynx48K
-
-assign ramA = { 7'b0000000,  a[14], a[12:0] };
-
-`elsif Lynx96K
-
-assign ramA = { 5'b00000, a };
-
-`endif
+assign ramA = { 5'b00000, ramAW == 14 ? { 2'b00,  a[14], a[12:0] } : a };
 
 //-------------------------------------------------------------------------------------------------
 
@@ -260,8 +227,9 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 //-------------------------------------------------------------------------------------------------
 
 assign di
-	= !mreq && !reg7F[4] && a[15:14] == 2'b00  ? romDo
-	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
+
+	= !mreq && !reg7F[4] && a[15:14] == 2'b00 ? romDo
+	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? (romAW == 14 ? 8'hFF : romDo)
 	: !mreq && !reg7F[5] ? ramD
 	: !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
 	: !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
