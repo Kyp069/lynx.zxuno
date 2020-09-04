@@ -7,6 +7,7 @@ module keyboard
 	input  wire[1:0] ps2,
 	output wire      reset,
 	output wire      boot,
+	output wire      cas,
 	input  wire[3:0] row,
 	output wire[7:0] do
 );
@@ -71,11 +72,13 @@ end
 
 reg      pressed = 1'b0;
 
+reg      F8; // cas
 reg      F11; // boot
 reg      F12; // reset
 reg[7:0] key[9:0];
 
 initial begin
+	F8 = 1'b1;
 	F11 = 1'b1;
 	F12 = 1'b1;
 
@@ -99,8 +102,9 @@ if(received)
 		pressed <= 1'b0;
 
 		case(scancode)
-			8'h78: F11  <= pressed; // F11
-			8'h07: F12  <= pressed; // F12
+			8'h0A: F8        <= pressed; // F8
+			8'h78: F11       <= pressed; // F11
+			8'h07: F12       <= pressed; // F12
 
 			8'h16: key[0][0] <= pressed; // 1
 //			8'h00: key[0][1] <= pressed; // 
@@ -197,8 +201,9 @@ if(received)
 
 //-------------------------------------------------------------------------------------------------
 
-assign reset = F12;
+assign cas = F8;
 assign boot = F11;
+assign reset = F12;
 assign do = key[row];
 
 //-------------------------------------------------------------------------------------------------

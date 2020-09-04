@@ -238,6 +238,7 @@ keyboard Keyboard
 	.ps2    (ps2    ),
 	.reset  (reset  ),
 	.boot   (boot   ),
+	.cas    (cas    ),
 	.row    (keybRow),
 	.do     (keybDo )
 );
@@ -252,7 +253,16 @@ assign ramA = { 5'b00000, ramAW == 14 ? { 2'b00,  a[14], a[12:0] } : a };
 
 //-------------------------------------------------------------------------------------------------
 
-assign vduDi = vduB[1] ? (!reg80[3] ? vggDo1 : 8'h00) : (!reg80[2] ? vrbDo1 : 8'h00);
+reg casd;
+reg cas23;
+
+always @(posedge clock) if(ce600p)
+begin
+	casd <= cas;
+	if(casd && !cas) cas23 <= ~cas23;
+end
+
+assign vduDi = vduB[1] ? (!cas23 || !reg80[3] ? vggDo1 : 8'h00) : (!cas23 || !reg80[2] ? vrbDo1 : 8'h00);
 wire[12:0] vmmA = { crtcMa[10:5], crtcRa[1:0], crtcMa[4:0] };
 
 //-------------------------------------------------------------------------------------------------

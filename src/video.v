@@ -13,8 +13,12 @@ module video
 
 //-------------------------------------------------------------------------------------------------
 
+reg[8:0] ves;
+wire ve = ves[8];
+always @(posedge clock) if(ce) ves <= { ves[7:0], de };
+
 reg[2:0] hCount;
-always @(posedge clock) if(ce) if(!de) hCount <= 3'b111; else hCount <= hCount+1'd1;
+always @(posedge clock) if(ce) if(de|ve) hCount <= hCount+1'd1; else hCount <= 3'b111;
 
 reg[7:0] blueInput;
 wire blueInputLoad = (hCount == 1);
@@ -32,15 +36,11 @@ reg[7:0] greenInput;
 wire greenInputLoad = (hCount == 7);
 always @(posedge clock) if(ce) if(greenInputLoad) greenInput <= di;
 
-reg[8:0] veDelay;
-wire videoEnable = veDelay[8];
-always @(posedge clock) if(ce) veDelay <= { veDelay[7:0], de };
-
 reg[7:0] redOutput;
 reg[7:0] blueOutput;
 reg[7:0] greenOutput;
 reg[7:0] greenxOutput;
-wire dataOutputLoad = hCount == 0 && videoEnable;
+wire dataOutputLoad = hCount == 0 && ve;
 
 always @(posedge clock) if(ce)
 if(dataOutputLoad)
@@ -58,7 +58,7 @@ begin
 	greenxOutput <= { greenxOutput[6:0], 1'b0 };
 end
 
-assign rgb = videoEnable ? { {3{redOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}}, {3{blueOutput[7]}} } : 9'd0;
+assign rgb = ve ? { {3{redOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}}, {3{blueOutput[7]}} } : 9'd0;
 
 assign b = hCount[2:1];
 
