@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// Lynx: Lynx 48K/96K implementation for ZX-Uno board by Kyp
+// Lynx: Lynx 48K/96K/96Kscorpion implementation for ZX-Uno board by Kyp
 // https://github.com/Kyp069/lynx
 //-------------------------------------------------------------------------------------------------
 // Z80 chip module implementation by Sorgelig
@@ -203,6 +203,7 @@ wire[1:0] vduB;
 
 video Video
 (
+	.reset  (~hSync ),
 	.clock  (clock  ),
 	.ce     (ce600p ),
 	.de     (crtcDe ),

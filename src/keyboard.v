@@ -70,18 +70,19 @@ end
 
 //-------------------------------------------------------------------------------------------------
 
-reg      pressed = 1'b0;
+reg pressed;
 
-reg      F8; // cas
-reg      F11; // boot
-reg      F12; // reset
+reg F8; // cas
+reg F11; // boot
+reg F12; // reset
 reg[7:0] key[9:0];
 
-initial begin
-	F8 = 1'b1;
-	F11 = 1'b1;
-	F12 = 1'b1;
+wire ctrl = key[2][6];
+reg alt;
+reg del;
+reg bs;
 
+initial begin
 	key[0] = 8'hFF;
 	key[1] = 8'hFF;
 	key[2] = 8'hFF;
@@ -92,6 +93,14 @@ initial begin
 	key[7] = 8'hFF;
 	key[8] = 8'hFF;
 	key[9] = 8'hFF;
+
+	F8 = 1'b1;
+	F11 = 1'b1;
+	F12 = 1'b1;
+	
+	alt = 1'b1;
+	del = 1'b1;
+	bs = 1'b1;
 end
 
 always @(posedge clock) if(ce)
@@ -102,9 +111,8 @@ if(received)
 		pressed <= 1'b0;
 
 		case(scancode)
-			8'h0A: F8        <= pressed; // F8
-			8'h78: F11       <= pressed; // F11
-			8'h07: F12       <= pressed; // F12
+			8'h11: alt <= pressed; // right alt
+			8'h71: del <= pressed; // right del
 
 			8'h16: key[0][0] <= pressed; // 1
 //			8'h00: key[0][1] <= pressed; // 
@@ -188,7 +196,7 @@ if(received)
 //			8'h00: key[8][6] <= pressed; // 
 //			8'h00: key[8][7] <= pressed; // 
 
-			8'h66: key[9][0] <= pressed; // delete
+			8'h66: { key[9][0], bs } <= {2{pressed}}; // backspace
 			8'h5B: key[9][1] <= pressed; // ]
 			8'h6B: key[9][2] <= pressed; // left
 			8'h5A: key[9][3] <= pressed; // return
@@ -196,15 +204,20 @@ if(received)
 			8'h74: key[9][5] <= pressed; // right
 //			8'h00: key[9][6] <= pressed; // 
 //			8'h00: key[9][7] <= pressed; // 
+
+			8'h0A: F8        <= pressed; // F8
+			8'h78: F11       <= pressed; // F11
+			8'h07: F12       <= pressed; // F12
 		endcase
 	end
 
 //-------------------------------------------------------------------------------------------------
 
-assign cas = F8;
-assign boot = F11;
-assign reset = F12;
 assign do = key[row];
+
+assign cas = F8;
+assign boot = F11 && (ctrl|alt|bs);
+assign reset = F12 && (ctrl|alt|del);
 
 //-------------------------------------------------------------------------------------------------
 endmodule
